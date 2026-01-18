@@ -5,6 +5,7 @@ const menu = [
   { name: "My Staff", path: "/staff-cards", icon: "👥" },
   { name: "Transactions", path: "/transactions", icon: "💳" },
   { name: "Settings", path: "/settings", icon: "⚙️" },
+  { name: "Calendar", path: "/my-calender", icon: "📅" },
 ];
 
 export default function Sidebar() {

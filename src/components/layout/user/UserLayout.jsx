@@ -93,6 +93,8 @@ export default function UserLayout({ children }) {
   const menu = [
     { name: "My Card", path: "/user/my-card", icon: "👤" },
     { name: "Edit Card", path: "/user/edit-card", icon: "✏️" },
+
+    { name: "Calendar", path: "/my-calender", icon: "📅" },
   ];
 
   return (

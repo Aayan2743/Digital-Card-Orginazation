@@ -21,6 +21,8 @@ import StaffCardEditForm from "../components/StaffCardEditForm";
 import MyCard from "../pages/user/MyCard";
 import UserCardPreview from "../pages/organizations/UserCardPreview";
 import UserStaffCardEditForm from "../components/UserStaffCardEditForm";
+import MeetingCalendar from "../components/MeetingCalendar";
+import StaffMeetingCalendar from "../components/StaffMeetingCalendar";
 
 export default function AdminRoutes() {
   return (
@@ -63,10 +65,30 @@ export default function AdminRoutes() {
         }
       />
 
+      <Route
+        path="/my-calender"
+        element={
+          <ProtectedRoute>
+            <StaffMeetingCalendar />
+          </ProtectedRoute>
+        }
+      />
+
       {/* user routes from here */}
 
       <Route
         path="/user/my-card"
+        element={
+          <ProtectedRoute>
+            {/* <MyCard /> */}
+
+            <UserCardPreview />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/user/calender"
         element={
           <ProtectedRoute>
             {/* <MyCard /> */}

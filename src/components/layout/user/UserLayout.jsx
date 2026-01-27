@@ -95,6 +95,8 @@ export default function UserLayout({ children }) {
     { name: "Edit Card", path: "/user/edit-card", icon: "✏️" },
 
     { name: "Calendar", path: "/my-calender", icon: "📅" },
+
+    { name: "Contact", path: "/user/save-card", icon: "👤" },
   ];
 
   return (
@@ -205,7 +207,7 @@ export default function UserLayout({ children }) {
 
         {/* FOOTER */}
         <footer className="text-center text-xs text-slate-400 py-4">
-          © {new Date().getFullYear()} Digital Card Platform
+          © {new Date().getFullYear()} OneDesk
         </footer>
       </div>
     </div>

@@ -23,6 +23,7 @@ import UserCardPreview from "../pages/organizations/UserCardPreview";
 import UserStaffCardEditForm from "../components/UserStaffCardEditForm";
 import MeetingCalendar from "../components/MeetingCalendar";
 import StaffMeetingCalendar from "../components/StaffMeetingCalendar";
+import ScanContactUI from "../components/ScanContactUI";
 
 export default function AdminRoutes() {
   return (
@@ -105,6 +106,17 @@ export default function AdminRoutes() {
             {/* <MyCard /> */}
 
             <UserStaffCardEditForm />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/user/save-card"
+        element={
+          <ProtectedRoute>
+            {/* <MyCard /> */}
+
+            <ScanContactUI />
           </ProtectedRoute>
         }
       />

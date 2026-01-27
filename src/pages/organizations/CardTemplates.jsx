@@ -158,8 +158,8 @@ export function CardTemplatePremium({ data = {} }) {
 
         {/* FOOTER */}
         <div className="flex justify-between items-center mt-8 text-xs text-gray-400">
-          <span>© Career Mentorz</span>
-          <span>Powered by GOGO</span>
+          <span>© OneDesk</span>
+          <span>Powered by OneDesk</span>
         </div>
       </div>
     </div>

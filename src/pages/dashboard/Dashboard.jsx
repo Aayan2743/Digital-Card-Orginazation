@@ -8,17 +8,19 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { useAuth } from "../../context/AuthContext";
 
-/* ================= Organization Details ================= */
-const organization = {
-  name: "ABC Corp",
-  email: "abc@corp.com",
-  phone: "9876543210",
-  logo: "https://via.placeholder.com/80",
-  // Intentionally empty or broken → handled safely
-  cover: "",
+/* ================= HELPERS ================= */
+const toFullUrl = (path) => {
+  if (!path) return null;
+
+  // already full URL
+  if (path.startsWith("http")) return path;
+
+  const baseUrl = import.meta.env.VITE_API_URL.replace("/api", "");
+  return `${baseUrl}/storage/${path}`;
 };
-/* ======================================================== */
+/* =========================================== */
 
 const stats = [
   {
@@ -53,6 +55,23 @@ const chartData = [
 ];
 
 export default function OrganizationDashboard() {
+  const { user, brand } = useAuth();
+
+  console.log("Dashboard Rendered with brand:", user?.email);
+
+  /* ================= DERIVED DATA ================= */
+  const orgName =
+    brand?.brand_name || user?.organization?.name || "Organization";
+
+  const orgEmail = user?.email || "N/A";
+  const orgPhone = user?.phone || "N/A";
+
+  const logo =
+    toFullUrl(brand?.logo) || "https://via.placeholder.com/80?text=Logo";
+
+  const cover = toFullUrl(brand?.cover_page);
+  /* =============================================== */
+
   return (
     <AdminLayout>
       {/* ================= Back Button ================= */}
@@ -63,15 +82,21 @@ export default function OrganizationDashboard() {
         ← Back to Organizations
       </button>
 
-      {/* ================= Cover Section (FIXED) ================= */}
+      {/* ================= Cover Section ================= */}
       <div className="relative mb-24">
-        {/* Gradient fallback instead of broken image */}
-        <div className="w-full h-[260px] rounded-2xl bg-gradient-to-b from-slate-200 to-slate-400" />
+        {cover ? (
+          <div
+            className="w-full h-[260px] rounded-2xl bg-center bg-cover"
+            style={{ backgroundImage: `url(${cover})` }}
+          />
+        ) : (
+          <div className="w-full h-[260px] rounded-2xl bg-gradient-to-b from-slate-200 to-slate-400" />
+        )}
 
         {/* Floating Organization Card */}
         <div className="absolute -bottom-14 left-6 bg-white rounded-2xl shadow-lg p-4 flex gap-4 items-center w-[320px]">
           <img
-            src={organization.logo}
+            src={logo}
             alt="Organization Logo"
             onError={(e) => {
               e.currentTarget.src = "https://via.placeholder.com/80?text=Logo";
@@ -79,18 +104,14 @@ export default function OrganizationDashboard() {
             className="w-16 h-16 rounded-xl object-cover border"
           />
           <div>
-            <h3 className="text-lg font-bold text-slate-800">
-              {organization.name}
-            </h3>
-            <p className="text-sm text-slate-500">{organization.email}</p>
-            <p className="text-sm text-slate-500">{organization.phone}</p>
+            <h3 className="text-lg font-bold text-slate-800">{orgName}</h3>
+            {orgEmail && <p className="text-sm text-slate-500">{orgEmail}</p>}
+            {orgPhone && <p className="text-sm text-slate-500">{orgPhone}</p>}
           </div>
         </div>
       </div>
 
-      {/* ================= EXISTING DASHBOARD (UNCHANGED) ================= */}
-
-      {/* Header */}
+      {/* ================= Dashboard Header ================= */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">
@@ -102,7 +123,7 @@ export default function OrganizationDashboard() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* ================= KPI Cards ================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         {stats.map((item) => (
           <div
@@ -115,7 +136,7 @@ export default function OrganizationDashboard() {
         ))}
       </div>
 
-      {/* Chart */}
+      {/* ================= Chart ================= */}
       <div className="grid grid-cols-1 xl:grid-cols-1 gap-6">
         <div className="bg-white rounded-2xl p-5 shadow">
           <h3 className="font-semibold mb-4">Employee Growth</h3>

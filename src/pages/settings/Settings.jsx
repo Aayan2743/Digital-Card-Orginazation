@@ -1,60 +1,182 @@
-import { useState } from "react";
-import { Camera, ImageIcon, Lock, Unlock } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Camera, ImageIcon } from "lucide-react";
 import AdminLayout from "../../components/layout/AdminLayout";
+import api from "../../api/axios";
+import { successAlert, errorAlert } from "../../utils/alert";
+import { useLoader } from "../../context/LoaderContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Settings() {
+  const hasFetched = useRef(false);
+
+  const { updateBrand } = useAuth();
   /* ================= STATE ================= */
+  const [brandName, setBrandName] = useState("");
   const [cover, setCover] = useState(null);
   const [logo, setLogo] = useState(null);
 
-  const [locks, setLocks] = useState({
-    templateChange: false,
-    coverChange: false,
+  const [coverFile, setCoverFile] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+
+  const { showLoader, hideLoader } = useLoader();
+
+  const [permissions, setPermissions] = useState({
+    templateChange: true,
+    coverChange: true,
     customCommunityLogo: false,
   });
 
-  const toggleLock = (key) => {
-    setLocks((prev) => ({ ...prev, [key]: !prev[key] }));
+  const [loading, setLoading] = useState(false);
+
+  /* ================= FETCH SETTINGS ================= */
+
+  useEffect(() => {
+    if (hasFetched.current) return;
+
+    hasFetched.current = true;
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      showLoader();
+
+      const { data } = await api.get("/settings-orginization");
+
+      if (data?.data) {
+        setBrandName(data.data.brand_name || "");
+        setCover(data.data.cover_page || null);
+        setLogo(data.data.logo || null);
+
+        setPermissions({
+          templateChange: !!data.data.template_change,
+          coverChange: !!data.data.cover_change,
+          customCommunityLogo: !!data.data.custom_community_logo,
+        });
+      }
+    } catch (error) {
+      errorAlert(
+        "Failed",
+        error.response?.data?.message || "Unable to load settings",
+      );
+    } finally {
+      hideLoader();
+    }
+  };
+
+  /* ================= SAVE SETTINGS ================= */
+
+  const handleSave = async () => {
+    // logo required only if no existing logo
+    if (!logo && !logoFile) {
+      errorAlert("Validation Error", "Logo is required");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("brand_name", brandName);
+
+      // ✅ ONLY append if File exists
+      if (logoFile instanceof File) {
+        formData.append("logo", logoFile);
+      }
+
+      if (coverFile instanceof File) {
+        formData.append("cover_image", coverFile);
+      }
+
+      formData.append("template_change", permissions.templateChange ? 1 : 0);
+      formData.append("cover_change", permissions.coverChange ? 1 : 0);
+      formData.append(
+        "custom_community_logo",
+        permissions.customCommunityLogo ? 1 : 0,
+      );
+
+      const { data } = await api.post(
+        "/organizations/brand-settings",
+        formData,
+      );
+
+      setBrandName(data.data.brand_name);
+      setCover(data.data.cover_page);
+      setLogo(data.data.logo);
+
+      updateBrand(data.data);
+
+      successAlert("Success", "Brand settings updated successfully");
+
+      hasFetched.current = false;
+      fetchSettings();
+    } catch (error) {
+      console.error("UPLOAD ERROR:", error);
+
+      errorAlert(
+        "Save Failed",
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to save settings",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const togglePermission = (key) => {
+    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
     <AdminLayout>
-      {/* PAGE HEADER */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-semibold text-slate-800">
-          Brand Appearance & Access
-        </h2>
-        <p className="text-slate-500">
-          Control branding visuals and what users are allowed to customize
+      {/* ================= HEADER ================= */}
+      <div className="mb-12">
+        <h1 className="text-3xl font-bold text-slate-800">Brand Settings</h1>
+        <p className="text-slate-500 mt-1">
+          Customize brand visuals & control staff permissions
         </p>
       </div>
 
-      <div className="space-y-14">
-        {/* ================= COVER IMAGE ================= */}
-        <div className="bg-white rounded-3xl shadow overflow-hidden">
-          <div className="px-6 py-5 border-b">
-            <h3 className="text-lg font-semibold">Cover Image</h3>
-            <p className="text-sm text-slate-500">
-              Large banner shown on all digital cards
-            </p>
-          </div>
+      <div className="space-y-16">
+        {/* ================= BRAND NAME ================= */}
+        <GlassCard
+          title="Brand Identity"
+          subtitle="How your organization appears publicly"
+        >
+          <input
+            type="text"
+            value={brandName}
+            onChange={(e) => setBrandName(e.target.value)}
+            placeholder="OneDesk Technologies"
+            className="w-full max-w-md px-4 py-3 rounded-xl border
+                       border-slate-300 bg-white/80
+                       focus:ring-2 focus:ring-indigo-500
+                       focus:outline-none"
+          />
+        </GlassCard>
 
-          <div className="relative h-60 bg-slate-200">
+        {/* ================= COVER IMAGE ================= */}
+        <GlassCard
+          title="Cover Image"
+          subtitle="Large banner shown on all digital cards"
+        >
+          <div className="relative h-64 rounded-2xl overflow-hidden bg-slate-200">
             {cover ? (
-              <img src={cover} className="w-full h-full object-cover" />
+              <img
+                src={cover}
+                loading="lazy"
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 text-sm">
-                <ImageIcon size={30} className="mb-2 opacity-60" />
+              <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                <ImageIcon size={36} className="mb-2 opacity-50" />
                 No cover image uploaded
               </div>
             )}
 
-            <label className="absolute right-6 bottom-6 cursor-pointer">
-              <div
-                className="flex items-center gap-2 bg-white/90 backdrop-blur
-                           px-5 py-2.5 rounded-xl shadow-md
-                           text-sm font-medium hover:bg-white"
-              >
+            <label className="absolute bottom-4 right-4 cursor-pointer">
+              <div className="flex items-center gap-2 bg-white/90 px-4 py-2 rounded-xl shadow">
                 <Camera size={16} />
                 Change Cover
               </div>
@@ -62,168 +184,87 @@ export default function Settings() {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) =>
-                  setCover(URL.createObjectURL(e.target.files[0]))
-                }
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  setCover(URL.createObjectURL(file));
+                  setCoverFile(file);
+                }}
               />
             </label>
           </div>
+        </GlassCard>
 
-          <div className="px-6 py-4 text-xs text-slate-500">
-            Recommended size: <strong>1200 × 300</strong> · JPG or PNG
-          </div>
-        </div>
-
-        {/* ================= ORGANIZATION LOGO ================= */}
-        <div className="bg-white rounded-3xl shadow overflow-hidden">
-          <div className="px-6 py-5 border-b">
-            <h3 className="text-lg font-semibold">Organization Logo</h3>
-            <p className="text-sm text-slate-500">
-              Displayed as avatar on cards and profiles
-            </p>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-center gap-10 px-6 py-10">
-            <div className="relative">
-              <div
-                className="w-36 h-36 rounded-full border-4 border-white
-                           shadow-xl bg-slate-100 overflow-hidden
-                           flex items-center justify-center"
-              >
-                {logo ? (
-                  <img src={logo} className="w-full h-full object-contain" />
-                ) : (
-                  <span className="text-xs text-slate-400">No Logo</span>
-                )}
-              </div>
-
-              <label className="absolute -bottom-2 right-3 cursor-pointer">
-                <div className="bg-indigo-600 text-white p-2 rounded-full shadow hover:bg-indigo-700">
-                  <Camera size={14} />
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) =>
-                    setLogo(URL.createObjectURL(e.target.files[0]))
-                  }
-                />
-              </label>
-            </div>
-
-            <div className="flex-1">
-              <h4 className="font-medium mb-1">
-                Upload your organization logo
-              </h4>
-              <p className="text-sm text-slate-500 mb-5">
-                Used across employee cards and branding areas
-              </p>
-
-              <label
-                className="inline-flex items-center gap-2 cursor-pointer
-                           px-6 py-3 rounded-xl bg-slate-900
-                           text-white text-sm font-medium hover:bg-slate-800"
-              >
-                Upload Logo
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) =>
-                    setLogo(URL.createObjectURL(e.target.files[0]))
-                  }
-                />
-              </label>
-
-              <p className="text-xs text-slate-500 mt-3">
-                Recommended: <strong>200 × 200</strong> PNG or SVG
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* ================= ACCESS CONTROLLER ================= */}
-        <div className="bg-white rounded-3xl shadow overflow-hidden">
-          <div className="px-6 py-5 border-b">
-            <h3 className="text-lg font-semibold">Access Controller</h3>
-            <p className="text-sm text-slate-500">
-              Control what staff members are allowed to customize
-            </p>
-          </div>
-
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="p-4 text-left">Permission</th>
-                <th className="p-4 text-center">Status</th>
-                <th className="p-4 text-right">Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <PermissionRow
-                label="Change Templates"
-                locked={locks.templateChange}
-                onToggle={() => toggleLock("templateChange")}
-              />
-
-              <PermissionRow
-                label="Change Cover Images"
-                locked={locks.coverChange}
-                onToggle={() => toggleLock("coverChange")}
-              />
-
-              <PermissionRow
-                label="Add Custom Community Logos"
-                locked={locks.customCommunityLogo}
-                onToggle={() => toggleLock("customCommunityLogo")}
-              />
-            </tbody>
-          </table>
-        </div>
-
-        {/* SAVE */}
-        <button
-          className="bg-indigo-600 text-white px-10 py-3
-                     rounded-xl font-semibold shadow
-                     hover:bg-indigo-700 transition"
+        {/* ================= LOGO ================= */}
+        <GlassCard
+          title="Organization Logo"
+          subtitle="Shown on employee cards and profiles"
         >
-          Save Brand Settings
-        </button>
+          <div className="relative w-32 h-32 rounded-full bg-white shadow border overflow-hidden">
+            {logo ? (
+              <img
+                src={logo}
+                loading="lazy"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <span className="flex items-center justify-center h-full text-xs text-slate-400">
+                No Logo
+              </span>
+            )}
+
+            <label className="absolute bottom-0 right-0 cursor-pointer">
+              <div className="bg-indigo-600 text-white p-2 rounded-full shadow">
+                <Camera size={14} />
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+
+                  if (!file) return;
+
+                  // optional: validate on frontend
+                  if (!file.type.startsWith("image/")) {
+                    errorAlert("Invalid file", "Please select an image file");
+                    return;
+                  }
+
+                  setLogo(URL.createObjectURL(file)); // preview
+                  setLogoFile(file); // actual upload file
+                }}
+              />
+            </label>
+          </div>
+        </GlassCard>
+
+        {/* ================= SAVE ================= */}
+        <div className="flex justify-end">
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            className="px-10 py-3 rounded-xl bg-indigo-600 text-white font-semibold
+                       hover:bg-indigo-700 disabled:opacity-60 transition"
+          >
+            {loading ? "Saving..." : "Save Settings"}
+          </button>
+        </div>
       </div>
     </AdminLayout>
   );
 }
 
-/* ================= SMALL COMPONENT ================= */
+/* ================= UI HELPERS ================= */
 
-function PermissionRow({ label, locked, onToggle }) {
+function GlassCard({ title, subtitle, children }) {
   return (
-    <tr className="border-t">
-      <td className="p-4">{label}</td>
-      <td className="p-4 text-center">
-        <span
-          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium
-            ${
-              locked ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"
-            }`}
-        >
-          {locked ? <Lock size={12} /> : <Unlock size={12} />}
-          {locked ? "Locked" : "Allowed"}
-        </span>
-      </td>
-      <td className="p-4 text-right">
-        <button
-          onClick={onToggle}
-          className={`px-4 py-1.5 rounded-xl text-xs font-medium
-            ${
-              locked ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"
-            }`}
-        >
-          {locked ? "Unlock" : "Lock"}
-        </button>
-      </td>
-    </tr>
+    <div className="bg-white/80 backdrop-blur rounded-3xl shadow-xl p-8">
+      <h3 className="text-xl font-semibold text-slate-800">{title}</h3>
+      <p className="text-sm text-slate-500 mb-6">{subtitle}</p>
+      {children}
+    </div>
   );
 }

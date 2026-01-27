@@ -1,40 +1,70 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../api/axios";
+import { errorAlert, successAlert } from "../../utils/alert";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("admin"); // admin | user
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  // ✅ IMPORTANT: redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email || !password) {
+      errorAlert("Validation Error", "Email and password are required");
+      return;
+    }
 
-    // TEMP AUTH (replace with API later)
-    if (email && password) {
-      login({
-        id: 1,
-        name: role === "admin" ? "Organization Admin" : "Staff User",
-        role,
+    setLoading(true);
+
+    try {
+      const { data } = await api.post("/organazation-login", {
+        username: email, // email OR phone
+        password,
+        role: role === "admin" ? "employeer" : "employee",
       });
 
-      // ROLE BASED REDIRECT
-      if (role === "admin") {
-        navigate("/");
+      // ✅ SAVE AUTH PROPERLY
+      login({
+        token: data.token,
+        user: data.user,
+      });
+
+      // ✅ OPTIONAL success alert (can remove if you want silent login)
+      successAlert("Welcome", `Hello ${data.user.name}`);
+
+      // ✅ ROLE BASED REDIRECT
+      if (data.user.role === "employeer") {
+        navigate("/", { replace: true });
       } else {
-        navigate("/user/my-card");
+        navigate("/user/my-card", { replace: true });
       }
+    } catch (error) {
+      errorAlert(
+        "Login Failed",
+        error.response?.data?.message || "Unable to login. Please try again.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 px-4">
-      {/* Card */}
       <div className="w-full max-w-md bg-white/20 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-white/30">
-        {/* Logo / Title */}
+        {/* Title */}
         <div className="text-center mb-6">
           <div className="mx-auto mb-3 h-14 w-14 flex items-center justify-center rounded-full bg-white text-indigo-600 text-2xl font-bold shadow">
             A
@@ -49,7 +79,7 @@ export default function Login() {
           </p>
         </div>
 
-        {/* ROLE SWITCH */}
+        {/* Role Switch */}
         <div className="flex bg-white/20 rounded-xl p-1 mb-6">
           <button
             type="button"
@@ -80,14 +110,13 @@ export default function Login() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email */}
           <div>
             <label className="text-white text-sm mb-1 block">
-              Email Address
+              Email or Phone
             </label>
             <input
-              type="email"
-              placeholder="you@example.com"
+              type="text"
+              placeholder="email or phone"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -95,7 +124,6 @@ export default function Login() {
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="text-white text-sm mb-1 block">Password</label>
             <input
@@ -108,29 +136,17 @@ export default function Login() {
             />
           </div>
 
-          {/* Remember + Forgot */}
-          <div className="flex items-center justify-between text-sm text-white/80">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="accent-indigo-500" />
-              Remember me
-            </label>
-            <span className="hover:underline cursor-pointer">
-              Forgot password?
-            </span>
-          </div>
-
-          {/* Button */}
           <button
             type="submit"
-            className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition shadow-lg"
+            disabled={loading}
+            className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold transition shadow-lg"
           >
-            Sign In
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
-        {/* Footer */}
         <p className="text-center text-xs text-white/70 mt-6">
-          © {new Date().getFullYear()} Digital Card Platform
+          © {new Date().getFullYear()} OneDesk
         </p>
       </div>
     </div>

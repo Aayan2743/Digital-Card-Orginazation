@@ -8,11 +8,11 @@ import UserLayout from "../../components/layout/user/UserLayout";
 import { X } from "lucide-react";
 
 const sampleData = {
-  name: "Kannan Natarajan",
+  name: "Asif",
   role: "Founder & CEO",
-  bio: "Passionate UX / Branding Strategist with over 29+ years of experience. Advisor & Mentor for many tech startups to build a Global Brand & Scale the business.",
-  phone: "+91 9845347204",
-  email: "kannan@goodux.in",
+  bio: "Full Stack Developer / Branding Strategist with over 12+ years of experience. Advisor & Mentor for many tech startups to build a Global Brand & Scale the business.",
+  phone: "+91 9440161007",
+  email: "asif@gmail.com",
   website: "https://www.goodux.in",
   company: "Good User Xperience Private Limited",
   address: "Bannerghatta Main Road, Bangalore - 560076",

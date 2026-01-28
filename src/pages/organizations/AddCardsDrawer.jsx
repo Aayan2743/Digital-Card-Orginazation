@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { X, CreditCard, Calendar } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+
+
 
 const CARD_PRICE = 49;
 
 export default function AddCardsDrawer({ onClose, onSave }) {
+
+  const { user } = useAuth();
+
   const [cards, setCards] = useState(10);
   const [days, setDays] = useState(30);
 

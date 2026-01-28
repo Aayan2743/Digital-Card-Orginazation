@@ -24,11 +24,15 @@ import UserStaffCardEditForm from "../components/UserStaffCardEditForm";
 import MeetingCalendar from "../components/MeetingCalendar";
 import StaffMeetingCalendar from "../components/StaffMeetingCalendar";
 import ScanContactUI from "../components/ScanContactUI";
+import ForgotPassword from "../pages/auth/forgot-password";
+import ResetPassword from "../pages/auth/reset-password";
 
 export default function AdminRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/forget-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route
         path="/"

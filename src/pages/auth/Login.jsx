@@ -13,6 +13,10 @@ export default function Login() {
   const [role, setRole] = useState("admin"); // admin | user
   const [loading, setLoading] = useState(false);
 
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+
   // ✅ IMPORTANT: redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
@@ -144,6 +148,13 @@ export default function Login() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
+        <span
+          onClick={() => navigate("/forget-password")}
+          className="hover:underline cursor-pointer"
+        >
+          Forgot password?
+        </span>
 
         <p className="text-center text-xs text-white/70 mt-6">
           © {new Date().getFullYear()} OneDesk

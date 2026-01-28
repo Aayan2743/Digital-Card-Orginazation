@@ -9,7 +9,9 @@ import { useAuth } from "../../context/AuthContext";
 export default function Settings() {
   const hasFetched = useRef(false);
 
-  const { updateBrand } = useAuth();
+  const { updateBrand, brand } = useAuth();
+
+  // alert(brand.brand_name);
   /* ================= STATE ================= */
   const [brandName, setBrandName] = useState("");
   const [cover, setCover] = useState(null);
@@ -30,39 +32,47 @@ export default function Settings() {
 
   /* ================= FETCH SETTINGS ================= */
 
+  // useEffect(() => {
+  //   if (hasFetched.current) return;
+
+  //   hasFetched.current = true;
+  //   fetchSettings();
+  // }, []);
+
   useEffect(() => {
-    if (hasFetched.current) return;
+    if (!brand) return;
 
-    hasFetched.current = true;
-    fetchSettings();
-  }, []);
+    setBrandName(brand.brand_name || "");
+    setLogo(brand.logo || null);
+    setCover(brand.cover_page || null);
+  }, [brand]);
 
-  const fetchSettings = async () => {
-    try {
-      showLoader();
+  // const fetchSettings = async () => {
+  //   try {
+  //     showLoader();
 
-      const { data } = await api.get("/settings-orginization");
+  //     const { data } = await api.get("/settings-orginization");
 
-      if (data?.data) {
-        setBrandName(data.data.brand_name || "");
-        setCover(data.data.cover_page || null);
-        setLogo(data.data.logo || null);
+  //     if (data?.data) {
+  //       setBrandName(data.data.brand_name || "");
+  //       setCover(data.data.cover_page || null);
+  //       setLogo(data.data.logo || null);
 
-        setPermissions({
-          templateChange: !!data.data.template_change,
-          coverChange: !!data.data.cover_change,
-          customCommunityLogo: !!data.data.custom_community_logo,
-        });
-      }
-    } catch (error) {
-      errorAlert(
-        "Failed",
-        error.response?.data?.message || "Unable to load settings",
-      );
-    } finally {
-      hideLoader();
-    }
-  };
+  //       setPermissions({
+  //         templateChange: !!data.data.template_change,
+  //         coverChange: !!data.data.cover_change,
+  //         customCommunityLogo: !!data.data.custom_community_logo,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     errorAlert(
+  //       "Failed",
+  //       error.response?.data?.message || "Unable to load settings",
+  //     );
+  //   } finally {
+  //     hideLoader();
+  //   }
+  // };
 
   /* ================= SAVE SETTINGS ================= */
 
@@ -109,7 +119,7 @@ export default function Settings() {
       successAlert("Success", "Brand settings updated successfully");
 
       hasFetched.current = false;
-      fetchSettings();
+      // fetchSettings();
     } catch (error) {
       console.error("UPLOAD ERROR:", error);
 

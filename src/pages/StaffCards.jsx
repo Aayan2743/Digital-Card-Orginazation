@@ -1,28 +1,40 @@
-import { useState } from "react";
 import CardTabs from "../components/CardTabs";
 import StaffCard from "../components/StaffCard";
 import CardPlaceholder from "../components/CardPlaceholder";
 import AdminLayout from "../components/layout/AdminLayout";
+import { useState, useEffect } from "react";
+import api from "../api/axios";
 
 export default function StaffCards() {
   const [activeTab, setActiveTab] = useState("assigned");
 
-  const cards = Array.from({ length: 100 }).map((_, i) => ({
-    id: i,
-    assigned: i < 42,
-    employee:
-      i < 42
-        ? {
-            name: `Staff ${i + 1}`,
-            role: "Product Designer",
-            location: "Los Angeles, CA",
-            avatar: `https://i.pravatar.cc/150?img=${i + 5}`,
-          }
-        : null,
-  }));
+  // const cards = Array.from({ length: 100 }).map((_, i) => ({
+  //   id: i,
+  //   assigned: i < 42,
+  //   employee:
+  //     i < 42
+  //       ? {
+  //           name: `Staff ${i + 1}`,
+  //           role: "Product Designer",
+  //           location: "Los Angeles, CA",
+  //           avatar: `https://i.pravatar.cc/150?img=${i + 5}`,
+  //         }
+  //       : null,
+  // }));
 
-  const assigned = cards.filter((c) => c.assigned);
-  const unassigned = cards.filter((c) => !c.assigned);
+  const [assigned, setAssigned] = useState([]);
+  // const [unassignedCount, setUnassignedCount] = useState(0);
+  const [remainingSlots, setRemainingSlots] = useState(0);
+  // const assigned = cards.filter((c) => c.assigned);
+  // const unassigned = cards.filter((c) => !c.assigned);
+
+  useEffect(() => {
+    api.get("/staff-cards").then((res) => {
+      const data = res.data.data;
+      setAssigned(data.assigned_cards);
+      setRemainingSlots(data.remaining_slots);
+    });
+  }, []);
 
   return (
     <AdminLayout>
@@ -32,7 +44,7 @@ export default function StaffCards() {
           setActive={setActiveTab}
           counts={{
             assigned: assigned.length,
-            unassigned: unassigned.length,
+            unassigned: remainingSlots,
           }}
         />
 
@@ -43,10 +55,11 @@ export default function StaffCards() {
             ))}
 
           {activeTab === "unassigned" &&
-            unassigned.map((card) => (
+            Array.from({ length: remainingSlots }).map((_, index) => (
               <CardPlaceholder
-                key={card.id}
-                onAssign={() => alert("Open Assign Drawer")}
+                key={index}
+                isAdd
+                onAssign={() => navigate("/staff-cards/create")}
               />
             ))}
         </div>
